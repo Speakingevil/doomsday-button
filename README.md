@@ -1,1 +1,1 @@
-# doomsday-button
+#[ModKit Wiki](../../wiki)
