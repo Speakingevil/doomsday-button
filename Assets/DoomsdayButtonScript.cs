@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 public class DoomsdayButtonScript : MonoBehaviour {
@@ -46,19 +47,26 @@ public class DoomsdayButtonScript : MonoBehaviour {
 
     private void Activate()
     {
+        if (TwitchPlaysActive)
+            requestDetonation = false;
         int time = (int)info.GetTime();
-        presstime = Random.Range((time / 10) * 7, Mathf.Min(time - 19, (time / 10) * 9));
+        presstime = Mathf.Max(0, Random.Range((time / 10) * 7, Mathf.Min(time - 19, (time / 10) * 9)));
+        clock.color = TimeModeActive ? new Color(1, 0.5f, 0) : ZenModeActive ? Color.cyan : Color.red; // Set the color of the text based on the mode.
         clock.text = Clock(presstime);
         limit = info.GetSolvableModuleNames().Where(x => x != "Doomsday Button").Count();
-        Debug.LogFormat("[Doomsday Button #{0}] Target time generated: {1}", moduleID, Clock(presstime));
-        StartCoroutine(Disarm());
+        if (!ZenModeActive)
+        {
+            Debug.LogFormat("[Doomsday Button #{0}] Target time generated: {1}", moduleID, Clock(presstime));
+            StartCoroutine(Disarm());
+        }
+        else
+            StartCoroutine(DisarmInZen());
         if (limit > 0)
         {
             armed = true;
             StartCoroutine(blonk);
         }
     }
-
     private string Clock(int t)
     {
         string d = string.Empty;
@@ -107,9 +115,31 @@ public class DoomsdayButtonScript : MonoBehaviour {
                 }
                 solveCount = info.GetSolvedModuleNames().Count();
             }
-            else if ((int)info.GetTime() < presstime)
+            else if ((int)info.GetTime() < presstime &&
+                ((!TimeModeActive || info.GetSolvedModuleNames().Count() >= info.GetSolvableModuleNames().Where(x => x != "Doomsday Button").Count())
+                && !ZenModeActive))
                 StartCoroutine(f);
-            yield return new WaitForSeconds(0.5f);
+            yield return null;
+        }
+    }
+    private IEnumerator DisarmInZen()
+    {
+        Debug.LogFormat("[Doomsday Button #{0}] Target time will respect countdown timer. Zen Mode detected.", moduleID, Clock(presstime));
+        while (!moduleSolved)
+        {
+            if (info.GetSolvedModuleNames().Count() > solveCount)
+            {
+                if (armed)
+                {
+                    armed = false;
+                    StopCoroutine(blonk);
+                    led.material = cols[0];
+                }
+                solveCount = info.GetSolvedModuleNames().Count();
+            }
+            presstime = Mathf.FloorToInt(info.GetTime());
+            clock.text = Clock(presstime);
+            yield return null;
         }
     }
 
@@ -135,6 +165,11 @@ public class DoomsdayButtonScript : MonoBehaviour {
             StartCoroutine(RedLight());
             Debug.LogFormat("[Doomsday Button #{0}] Too early. ({1})", moduleID, Clock((int)info.GetTime()));
         }
+        else if (TimeModeActive && (int)info.GetTime() < presstime)
+        {
+            StartCoroutine(RedLight());
+            Debug.LogFormat("[Doomsday Button #{0}] Too late. Get time back but don't run out of modules. ({1})", moduleID, Clock((int)info.GetTime()));
+        }
         else
         {
             Debug.LogFormat("[Doomsday Button #{0}] Button pressed at correct time.", moduleID);
@@ -147,28 +182,59 @@ public class DoomsdayButtonScript : MonoBehaviour {
                 StartCoroutine(blonk);
             armed = true;
             int time = (int)info.GetTime();
-            if (solveCount >= limit || time < 60)
+            if (!ZenModeActive)
             {
-                moduleSolved = true;
-                module.HandlePass();
-                StopCoroutine(blonk);
-                led.material = cols[2];
-                clock.text = "GOOD GAME";
-                Debug.LogFormat("[Doomsday Button #{0}] Module solved.", moduleID);
+                if (solveCount >= limit || time < 60)
+                {
+                    moduleSolved = true;
+                    module.HandlePass();
+                    StopCoroutine(blonk);
+                    led.material = cols[2];
+                    clock.text = "GOOD GAME";
+                    StartCoroutine(FadeToColor(Color.red));
+                    Debug.LogFormat("[Doomsday Button #{0}] Module solved.", moduleID);
+                }
+                else
+                {
+                    presstime = Random.Range((time / 10) * 7, Mathf.Min(time - 19, (time / 10) * 9));
+                    clock.text = Clock(presstime);
+                    Debug.LogFormat("[Doomsday Button #{0}] New target generated: {1}", moduleID, Clock(presstime));
+                }
             }
             else
             {
-                presstime = Random.Range((time / 10) * 7, Mathf.Min(time - 19, (time / 10) * 9));
-                clock.text = Clock(presstime);
-                Debug.LogFormat("[Doomsday Button #{0}] New target generated: {1}", moduleID, Clock(presstime));
+                Debug.LogFormat("[Doomsday Button #{0}] Zen Mode is active. Target time will still respect countdown timer.", moduleID);
+                if (solveCount >= limit)
+                {
+                    moduleSolved = true;
+                    module.HandlePass();
+                    StopCoroutine(blonk);
+                    led.material = cols[2];
+                    clock.text = "GOOD GAME";
+                    StartCoroutine(FadeToColor(Color.red));
+                    Debug.LogFormat("[Doomsday Button #{0}] Module solved.", moduleID);
+                }
             }
         }
+    }
+
+    private IEnumerator FadeToColor(Color expectedColor, float speed = 1f)
+    {
+        var prevColor = clock.color;
+        for (float x = 0; x < 1f; x += Time.deltaTime * speed)
+        {
+            clock.color = prevColor * (1 - x) + expectedColor * x;
+            yield return null;
+        }
+        clock.color = expectedColor;
     }
 
     private IEnumerator ItsFucked()
     {
         gameover = true;
+        TwitchHelpMessage = "GAME OVER. YOU FAILED TO ACCOUNT FOR THIS MODULE." + TwitchHelpMessage;
         Debug.LogFormat("[Doomsday Button #{0}] Target missed. Game Over.", moduleID);
+        StartCoroutine(FadeToColor(Color.red, 5f));
         clock.text = "GAME OVER";
         if (flip[0])
             StopCoroutine(move[0]);
@@ -187,12 +253,74 @@ public class DoomsdayButtonScript : MonoBehaviour {
         }
         while (true)
         {
-            module.HandleStrike();
+            if (!TwitchPlaysActive || requestDetonation)
+                module.HandleStrike();
             for (int i = 0; i < 5; i++)
             {
                 modselect.AddInteractionPunch(4);
                 yield return new WaitForSeconds(0.1f);
             }
         }
+    }
+    // TP Handler Begins Here.
+    bool requestDetonation = true;
+    bool TwitchPlaysActive;
+    bool TwitchPlaysSkipTimeAllowed = true;
+    bool TimeModeActive;
+    bool ZenModeActive;
+    string TwitchHelpMessage = "Submit at the specific time with \"!{0} submit #:##\" Time ranges can extend up to to DD:HH:MM:SS, while allowing for MM:SS, where MM can exceed 99 minutes.";
+    IEnumerator ProcessTwitchCommand(string cmd)
+    {
+        if (gameover)
+        {
+            yield return "sendtochat Your team left Doomsday Button unhandled for too long. Your team will have to pay the price.";
+            yield return "multiple strikes";
+            yield return "detonate";
+            //requestDetonation = true;
+            yield break;
+        }
+        Match submitMatch = Regex.Match(cmd, @"^(press|submit)\s\d+(:\d\d){1,3}$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        if (submitMatch.Success)
+        {
+            var timeMatch = Regex.Match(cmd, @"\d+(:\d\d){1,3}", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant).Value;
+            Debug.LogFormat("<Doomsday Button #{0}> DEBUG: Detected time range {1}.", moduleID, timeMatch);
+            var timeMultipliers = new[] { 1, 60, 3600, 86400, 604800 };
+            int timeExpected = 0;
+            var splittedValues = timeMatch.Split(':');
+            for (var x = 0; x < splittedValues.Length; x++)
+            {
+                int detectedValue;
+                var curString = splittedValues[splittedValues.Length - 1 - x];
+                if (!int.TryParse(curString, out detectedValue))
+                {
+                    yield return string.Format("sendtochaterror The module has detected an uncalculable value, \"{0}.\" I am NOT calculating that.", curString);
+                    yield break;
+                }
+                timeExpected += detectedValue * timeMultipliers[x];
+            }
+            if (timeExpected < 0)
+            {
+                yield return string.Format("sendtochaterror The module has detected a time that is below 0 seconds. I am NOT going to press it at that time.");
+                yield break;
+            }
+            yield return null;
+            //modselect.OnFocus();
+            yield return "skiptime " + (timeExpected + (ZenModeActive ? -5 : 5)).ToString();
+            if (Mathf.Abs(timeExpected - Mathf.FloorToInt(info.GetTime())) >= 30) yield return "waiting music";
+            while (timeExpected != Mathf.FloorToInt(info.GetTime()))
+            {
+                if ((timeExpected < Mathf.FloorToInt(info.GetTime()) && ZenModeActive) || (timeExpected > Mathf.FloorToInt(info.GetTime()) && !ZenModeActive))
+                {
+                    yield return string.Format("sendtochat A sudden time change caused the time range to no longer be reached. The press has been canceled because of this.");
+                    yield break;
+                }
+                yield return "trycancel The button press has been canceled!";
+            }
+            button.OnInteract();
+            //modselect.OnDefocus();
+            yield return "end waiting music";
+        }
+
+        yield break;
     }
 }
