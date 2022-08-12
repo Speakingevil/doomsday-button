@@ -356,6 +356,7 @@ GameObject:
   - component: {fileID: 114397621189591726}
   - component: {fileID: 114307156453805504}
   - component: {fileID: 114718873399540614}
+  - component: {fileID: 114558378465048636}
   m_Layer: 0
   m_Name: doomsdaybutton
   m_TagString: Untagged
@@ -1423,6 +1424,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShaderNames:
   - KT/Mobile/DiffuseTint
+--- !u!114 &114558378465048636
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1953643494986696}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96a2fc4ae3e690a498a0d85a2b5e0b99, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &114694407391428764
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1450,6 +1462,7 @@ MonoBehaviour:
   Audio: {fileID: 114240745872818380}
   module: {fileID: 114397621189591726}
   info: {fileID: 114506709254860730}
+  bossModule: {fileID: 114558378465048636}
   lid: {fileID: 1508518561156928}
   modselect: {fileID: 114307156453805504}
   button: {fileID: 114883341598994920}
