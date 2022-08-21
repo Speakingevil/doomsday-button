@@ -14,11 +14,10 @@ public class DoomsdayButtonScript : MonoBehaviour {
     public GameObject lid;
     public KMSelectable modselect;
     public KMSelectable button;
-    public Renderer led;
+    public Renderer led, btnFace;
     public List<Material> cols;
     public TextMesh clock;
     public GameObject matstore;
-    public List<Sprite> images;
 
     private int presstime;
     private int limit;
@@ -37,9 +36,10 @@ public class DoomsdayButtonScript : MonoBehaviour {
 
     private DoomsdayButtonSettings settings;
     private bool alterFailure, interactable;
-
+    private Renderer storedBtnRenderer;
     public class DoomsdayButtonSettings 
     {
+        public bool ForgivingOutsideofTP = false;
         public bool UseExperimentalDetoTP = false;
     }
     private void Awake()
@@ -71,6 +71,11 @@ public class DoomsdayButtonScript : MonoBehaviour {
         }
         else
             StartCoroutine(DisarmInZen());
+        // Set the color of the button's face and backing based on the mode.
+        storedBtnRenderer = button.GetComponent<Renderer>();
+        storedBtnRenderer.material.color = TimeModeActive ? new Color(1, 0.5f, 0) : ZenModeActive ? Color.cyan : new Color(2 / 3f, 0, 0);
+        btnFace.material.color = TimeModeActive ? new Color(1, 0.5f, 0) : ZenModeActive ? Color.cyan : new Color(2 / 3f, 0, 0);
+
         if (limit > 0)
         {
             armed = true;
@@ -81,7 +86,7 @@ public class DoomsdayButtonScript : MonoBehaviour {
             var modSettings = new ModConfig<DoomsdayButtonSettings>("DoomsdayButtonSettings");
             settings = modSettings.Settings;
             modSettings.Settings = settings;
-            alterFailure = !settings.UseExperimentalDetoTP;
+            alterFailure = (!settings.UseExperimentalDetoTP && TwitchPlaysActive) || (!TwitchPlaysActive && settings.ForgivingOutsideofTP);
             
         }
         catch
@@ -91,12 +96,14 @@ public class DoomsdayButtonScript : MonoBehaviour {
         }
         finally
         {
-            Debug.LogFormat("[Doomsday Button #{0}] TP Deto Altered? {1}", moduleID, alterFailure ? "YES, NO GAME OVERS YET" : "NO");
-            if (TwitchPlaysActive)
+            Debug.LogFormat("<Doomsday Button #{0}> Deto Altered? {1}", moduleID, alterFailure ? "YES" : "NO");
+            if (alterFailure)
             {
-                if (alterFailure)
-                    f = ItsFuckedSortOf();
+                f = ItsFuckedSortOf();
+                if (!TwitchPlaysActive)
+                    Debug.LogFormat("[Doomsday Button #{0}] Detonation handling has been altered outside of TP. Unless you are not running a mission, this may be considered as advantageous.", moduleID);
             }
+            interactable = true;
         }
     }
     private string Clock(int t)
@@ -212,6 +219,7 @@ public class DoomsdayButtonScript : MonoBehaviour {
                 led.material = cols[2];
                 clock.text = "GOOD GAME";
                 StartCoroutine(FadeToColor(Color.red));
+                StartCoroutine(FadeToColorBtn(new Color(2 / 3f, 0, 0)));
                 Debug.LogFormat("[Doomsday Button #{0}] Module solved.", moduleID);
             }
             return;
@@ -247,6 +255,7 @@ public class DoomsdayButtonScript : MonoBehaviour {
                 led.material = cols[2];
                 clock.text = "GOOD GAME";
                 StartCoroutine(FadeToColor(Color.red));
+                StartCoroutine(FadeToColorBtn(new Color(2 / 3f, 0, 0)));
                 Debug.LogFormat("[Doomsday Button #{0}] Module solved.", moduleID);
             }
             else
@@ -256,6 +265,19 @@ public class DoomsdayButtonScript : MonoBehaviour {
                 Debug.LogFormat("[Doomsday Button #{0}] New target generated: {1}", moduleID, Clock(presstime));
             }
         }
+    }
+    private IEnumerator FadeToColorBtn(Color newColor, float speed = 1f)
+    {
+        var prevColorBtn = storedBtnRenderer.material.color;
+        var prevColor = btnFace.material.color;
+        for (float x = 0; x < 1f; x += Time.deltaTime * speed)
+        {
+            storedBtnRenderer.material.color = prevColor * (1 - x) + newColor * x;
+            btnFace.material.color = prevColor * (1 - x) + newColor * x;
+            yield return null;
+        }
+        btnFace.material.color = newColor;
+        storedBtnRenderer.material.color = newColor;
     }
 
     private IEnumerator FadeToColor(Color expectedColor, float speed = 1f)
@@ -274,6 +296,7 @@ public class DoomsdayButtonScript : MonoBehaviour {
         interactable = false;
         Debug.LogFormat("[Doomsday Button #{0}] Target missed. But it's not over yet.", moduleID);
         StartCoroutine(FadeToColor(Color.red, 5f));
+        StartCoroutine(FadeToColorBtn(new Color(2 / 3f, 0, 0), 5f));
         clock.text = "YOU";
         if (flip[0])
             StopCoroutine(move[0]);
@@ -297,6 +320,7 @@ public class DoomsdayButtonScript : MonoBehaviour {
         clock.text = Clock(presstime);
         Debug.LogFormat("[Doomsday Button #{0}] New target generated: {1}", moduleID, Clock(presstime));
         StartCoroutine(FadeToColor(TimeModeActive ? new Color(1, 0.5f, 0) : Color.red, 1f));
+        StartCoroutine(FadeToColorBtn(TimeModeActive ? new Color(1, 0.5f, 0) : new Color(2 / 3f, 0, 0), 1f));
         if (armed)
             StartCoroutine(blonk);
         f = ItsFuckedSortOf();
@@ -311,6 +335,7 @@ public class DoomsdayButtonScript : MonoBehaviour {
         TwitchHelpMessage = "GAME OVER. YOU FAILED TO ACCOUNT FOR THIS MODULE. " + TwitchHelpMessage;
         Debug.LogFormat("[Doomsday Button #{0}] Target missed. Game Over.", moduleID);
         StartCoroutine(FadeToColor(Color.red, 5f));
+        StartCoroutine(FadeToColorBtn(new Color(2 / 3f, 0, 0), 5f));
         clock.text = "GAME OVER";
         if (flip[0])
             StopCoroutine(move[0]);
