@@ -356,6 +356,7 @@ GameObject:
   - component: {fileID: 114397621189591726}
   - component: {fileID: 114307156453805504}
   - component: {fileID: 114718873399540614}
+  - component: {fileID: 114558378465048636}
   m_Layer: 0
   m_Name: doomsdaybutton
   m_TagString: Untagged
@@ -1153,7 +1154,7 @@ MeshFilter:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1849015126756630}
-  m_Mesh: {fileID: 4300002, guid: 48f55061876d5684ebfa23f463d7fd94, type: 3}
+  m_Mesh: {fileID: 4300004, guid: 189b308b0a1d1cc45886c46dd687e154, type: 3}
 --- !u!33 &33034575324606606
 MeshFilter:
   m_ObjectHideFlags: 1
@@ -1167,7 +1168,7 @@ MeshFilter:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1375888353398606}
-  m_Mesh: {fileID: 4300002, guid: 3859c383bb28db5448462baa45614302, type: 3}
+  m_Mesh: {fileID: 4300002, guid: bd3fd885ce560aa45be29646b05b147f, type: 3}
 --- !u!33 &33291047230142758
 MeshFilter:
   m_ObjectHideFlags: 1
@@ -1181,21 +1182,21 @@ MeshFilter:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1645811213618194}
-  m_Mesh: {fileID: 4300000, guid: 55948a9b81c5ed64fbd033cee2af582d, type: 3}
+  m_Mesh: {fileID: 4300000, guid: 708a368063f4b1040bdd814b06d62d4c, type: 3}
 --- !u!33 &33480549058340516
 MeshFilter:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1853893739709116}
-  m_Mesh: {fileID: 4300000, guid: 3859c383bb28db5448462baa45614302, type: 3}
+  m_Mesh: {fileID: 4300000, guid: bd3fd885ce560aa45be29646b05b147f, type: 3}
 --- !u!33 &33500860868560792
 MeshFilter:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1195402240880672}
-  m_Mesh: {fileID: 4300002, guid: 48f55061876d5684ebfa23f463d7fd94, type: 3}
+  m_Mesh: {fileID: 4300002, guid: 189b308b0a1d1cc45886c46dd687e154, type: 3}
 --- !u!33 &33532052764371322
 MeshFilter:
   m_ObjectHideFlags: 1
@@ -1230,7 +1231,7 @@ MeshFilter:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1818024076958420}
-  m_Mesh: {fileID: 4300004, guid: 48f55061876d5684ebfa23f463d7fd94, type: 3}
+  m_Mesh: {fileID: 4300000, guid: 708a368063f4b1040bdd814b06d62d4c, type: 3}
 --- !u!33 &33946620110451358
 MeshFilter:
   m_ObjectHideFlags: 1
@@ -1244,7 +1245,7 @@ MeshFilter:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1508518561156928}
-  m_Mesh: {fileID: 4300000, guid: 48f55061876d5684ebfa23f463d7fd94, type: 3}
+  m_Mesh: {fileID: 4300000, guid: 189b308b0a1d1cc45886c46dd687e154, type: 3}
 --- !u!33 &33985756071020306
 MeshFilter:
   m_ObjectHideFlags: 1
@@ -1372,7 +1373,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ModuleType: doomsdayButton
   ModuleDisplayName: Doomsday Button
-  RequiresTimerVisibility: 0
+  RequiresTimerVisibility: 1
 --- !u!114 &114487824798427046
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1423,6 +1424,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShaderNames:
   - KT/Mobile/DiffuseTint
+--- !u!114 &114558378465048636
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1953643494986696}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96a2fc4ae3e690a498a0d85a2b5e0b99, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &114694407391428764
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1450,10 +1462,12 @@ MonoBehaviour:
   Audio: {fileID: 114240745872818380}
   module: {fileID: 114397621189591726}
   info: {fileID: 114506709254860730}
+  bossModule: {fileID: 114558378465048636}
   lid: {fileID: 1508518561156928}
   modselect: {fileID: 114307156453805504}
   button: {fileID: 114883341598994920}
   led: {fileID: 23055165210295288}
+  btnFace: {fileID: 23195285837599404}
   cols:
   - {fileID: 2100000, guid: 3988ef44496b38e4bacb55fadd85e67e, type: 2}
   - {fileID: 2100000, guid: bf1ecb867bad6f246995d716de5886e8, type: 2}
